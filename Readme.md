@@ -16,12 +16,12 @@ This application has 2 modes:
     PLEASE CHECK THE IMAGES WITHIN OUTPUT DIRECTORY
 
 Unit tests:
-    Only internal/sitereader has unit test based on time constraint so please check that out and imagine the same applies to the other left out functionality.
+    Only internal/sitereader has unit test due to time constraint from my end so please check that out and picture the same applies to the other left out functionality.
 
 .env:
     I am aware third parties were not permitted but I cheatted a little bit here to use .env configuration, sorry >D!
 
-    To use the .env file please create it with the following data: 
+    To run the HTTPServer, please create an .env file in the root and paste the data below: 
     *** configuration values are not intended to be public, more if we're talking about sensitive data, but for you guys to be able to run the app, and having in mind there are no tokens or security access credentials, I will leave them here.
 
     # 1 = LOCALCONSOLE / 2 = HTTPSERVER
