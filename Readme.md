@@ -13,14 +13,16 @@ This application has 2 modes:
         URL Example: http://localhost:8080/?url=https://golangcode.com/get-a-url-parameter-from-a-request/&maxDepth=3&xmlFileName=sitemapv20220723
 
     PLEASE CHECK THE IMAGES WITHIN OUTPUT DIRECTORY
-    
+
 Unit tests:
     Only internal/sitereader has unit test based on time constraint so please check that out and imagine the same applies to the other left out functionality.
 
 .env:
     I am aware third parties were not permitted but I cheatted a little bit here to use .env configuration, sorry >D!
 
-    To use the .env file please create it with the following data:
+    To use the .env file please create it with the following data: 
+    *** configuration values are not intended to be public, more if we're talking about sensitive data, but for you guys to be able to run the app, and having in mind there are no tokens or security access credentials, I will leave them here.
+    
     # 1 = LOCALCONSOLE / 2 = HTTPSERVER
     EXECUTION_MODE=1
     APP_NAME="Sitemaps"
