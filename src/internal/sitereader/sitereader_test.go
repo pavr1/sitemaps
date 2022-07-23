@@ -1,8 +1,10 @@
 package sitereader
 
 import (
+	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"testing"
@@ -50,6 +52,7 @@ var tests = []struct {
 	depth       int
 	expectedURL *struct {
 		method       string
+		args         interface{}
 		methodReturn struct {
 			url *url.URL
 			err error
@@ -57,6 +60,7 @@ var tests = []struct {
 	}
 	expectedHttp *struct {
 		method       string
+		args         interface{}
 		methodReturn struct {
 			response *http.Response
 			err      error
@@ -64,8 +68,9 @@ var tests = []struct {
 	}
 	expectedIoutil *struct {
 		method       string
+		args         interface{}
 		methodReturn struct {
-			response *http.Response
+			response []byte
 			err      error
 		}
 	}
@@ -79,21 +84,184 @@ var tests = []struct {
 		depth:      1,
 		expectedURL: &struct {
 			method       string
+			args         interface{}
 			methodReturn struct {
 				url *url.URL
 				err error
 			}
 		}{
 			method: "Parse",
+			args:   "test",
 			methodReturn: struct {
 				url *url.URL
 				err error
 			}{
 				url: nil,
-				err: fmt.Errorf("custom error"),
+				err: fmt.Errorf("custom parse error"),
 			},
 		},
+		expectedError: fmt.Errorf("custom parse error"),
 	},
+	{
+		TestName:   "getUrlContentHttpGetFailed",
+		link:       "url",
+		parentLink: "",
+		depth:      1,
+		expectedURL: &struct {
+			method       string
+			args         interface{}
+			methodReturn struct {
+				url *url.URL
+				err error
+			}
+		}{
+			method: "Parse",
+			args:   "url",
+			methodReturn: struct {
+				url *url.URL
+				err error
+			}{
+				url: &url.URL{
+					Path: "url",
+				},
+				err: nil,
+			},
+		},
+		expectedHttp: &struct {
+			method       string
+			args         interface{}
+			methodReturn struct {
+				response *http.Response
+				err      error
+			}
+		}{
+			method: "Get",
+			args:   "url",
+			methodReturn: struct {
+				response *http.Response
+				err      error
+			}{
+				response: nil,
+				err:      fmt.Errorf("custom http error"),
+			},
+		},
+		expectedError: fmt.Errorf("custom http error"),
+	},
+	{
+		TestName:   "getUrlContentHttpGetStatus404Failed",
+		link:       "url",
+		parentLink: "",
+		depth:      1,
+		expectedURL: &struct {
+			method       string
+			args         interface{}
+			methodReturn struct {
+				url *url.URL
+				err error
+			}
+		}{
+			method: "Parse",
+			args:   "url",
+			methodReturn: struct {
+				url *url.URL
+				err error
+			}{
+				url: &url.URL{
+					Path: "url",
+				},
+				err: nil,
+			},
+		},
+		expectedHttp: &struct {
+			method       string
+			args         interface{}
+			methodReturn struct {
+				response *http.Response
+				err      error
+			}
+		}{
+			method: "Get",
+			args:   "url",
+			methodReturn: struct {
+				response *http.Response
+				err      error
+			}{
+				response: &http.Response{
+					StatusCode: 404,
+					Body:       ioutil.NopCloser(bytes.NewBufferString("Hello World")),
+				},
+				err: nil,
+			},
+		},
+		expectedError: fmt.Errorf("status code 404"),
+	},
+	{
+		TestName:   "getUrlContentIoutilReadAllFailed",
+		link:       "url",
+		parentLink: "",
+		depth:      1,
+		expectedURL: &struct {
+			method       string
+			args         interface{}
+			methodReturn struct {
+				url *url.URL
+				err error
+			}
+		}{
+			method: "Parse",
+			args:   "url",
+			methodReturn: struct {
+				url *url.URL
+				err error
+			}{
+				url: &url.URL{
+					Path: "url",
+				},
+				err: nil,
+			},
+		},
+		expectedHttp: &struct {
+			method       string
+			args         interface{}
+			methodReturn struct {
+				response *http.Response
+				err      error
+			}
+		}{
+			method: "Get",
+			args:   "url",
+			methodReturn: struct {
+				response *http.Response
+				err      error
+			}{
+				response: &http.Response{
+					StatusCode: 200,
+					Body:       ioutil.NopCloser(bytes.NewBufferString("Hello World")),
+				},
+				err: nil,
+			},
+		},
+		expectedIoutil: &struct {
+			method       string
+			args         interface{}
+			methodReturn struct {
+				response []byte
+				err      error
+			}
+		}{
+			method: "ReadAll",
+			args:   ioutil.NopCloser(bytes.NewBufferString("Hello World")),
+			methodReturn: struct {
+				response []byte
+				err      error
+			}{
+				response: nil,
+				err:      fmt.Errorf("custom ReadAll error"),
+			},
+		},
+		expectedError: fmt.Errorf("custom ReadAll error"),
+	},
+	//...left processLinks test cases aside due to time
 }
 
 func Test_GetPageLinks(t *testing.T) {
@@ -105,23 +273,22 @@ func Test_GetPageLinks(t *testing.T) {
 	httpWrapperMock := httpWrapperMock{}
 	ioutilWrapperMock := ioutilWrapperMock{}
 
-	reader := NewSiteReader(3, log, urlWrapperMock, httpWrapperMock, ioutilWrapperMock)
-
 	for _, tt := range tests {
 		if tt.expectedURL != nil {
-			urlWrapperMock.On(tt.expectedURL.method).Return(tt.expectedURL.methodReturn.url, tt.expectedURL.methodReturn.err)
+			urlWrapperMock.On(tt.expectedURL.method, tt.expectedURL.args).Return(tt.expectedURL.methodReturn.url, tt.expectedURL.methodReturn.err)
 		}
-		if tt.expectedURL != nil {
-			httpWrapperMock.On(tt.expectedHttp.method).Return(tt.expectedHttp.methodReturn.response, tt.expectedHttp.methodReturn.err)
+		if tt.expectedHttp != nil {
+			httpWrapperMock.On(tt.expectedHttp.method, tt.expectedHttp.args).Return(tt.expectedHttp.methodReturn.response, tt.expectedHttp.methodReturn.err)
 		}
 		if tt.expectedIoutil != nil {
-			ioutilWrapperMock.On(tt.expectedHttp.method, mock.AnythingOfType("io.ReadCloser")).Return(tt.expectedHttp.methodReturn.response, tt.expectedHttp.methodReturn.err)
+			ioutilWrapperMock.On(tt.expectedIoutil.method, tt.expectedIoutil.args).Return(tt.expectedIoutil.methodReturn.response, tt.expectedIoutil.methodReturn.err)
 		}
 
+		reader := NewSiteReader(tt.depth, log, urlWrapperMock, httpWrapperMock, ioutilWrapperMock)
 		node, err := reader.GetPageLinks(tt.link, tt.parentLink, tt.depth)
 
 		if tt.expectedError == nil && err != nil {
-			t.Errorf("expected error nil, but got %s", err)
+			t.Errorf("expected error nil, but got '%s'", err.Error())
 			return
 		} else if tt.expectedError != nil {
 			assert.EqualError(t, tt.expectedError, err.Error())

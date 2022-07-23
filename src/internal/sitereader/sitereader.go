@@ -1,6 +1,7 @@
 package sitereader
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -125,7 +126,7 @@ func (s *siteReader) getUrlContent(urlToGet string) (string, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != OK {
-		return "", err
+		return "", fmt.Errorf("status code %d", resp.StatusCode)
 	}
 
 	if content, err = s.ioutil.ReadAll(resp.Body); err != nil {
