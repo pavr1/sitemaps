@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"sync"
 
 	"github.com/pvr1/sitemaps/src/internal/model"
 	"github.com/pvr1/sitemaps/src/internal/wrapper"
@@ -26,6 +27,7 @@ type siteReader struct {
 	url      wrapper.UrlWrapper
 	http     wrapper.HttpWrapper
 	ioutil   wrapper.IoutilWrapper
+	mu       sync.Mutex
 }
 
 func NewSiteReader(maxDepth int, logger *logrus.Entry, url wrapper.UrlWrapper, http wrapper.HttpWrapper, ioutil wrapper.IoutilWrapper) SiteReader {
@@ -85,16 +87,27 @@ func (s *siteReader) GetPageLinks(link string, parentLink string, depth int) (*m
 		return node, nil
 	}
 
+	var wg sync.WaitGroup
+	wg.Add(len(links))
+
 	for _, currentLink := range links {
-		n, err := s.GetPageLinks(currentLink, link, depth)
-		if err != nil {
-			l.WithError(err).Error("there was an error getting page links")
-			continue
-		}
-		if n != nil {
-			node.Nodes = append(node.Nodes, n)
-		}
+		go func(currentLink string, node *model.Node) {
+			defer wg.Done()
+
+			n, err := s.GetPageLinks(currentLink, link, depth)
+			if err != nil {
+				l.WithError(err).Error("there was an error getting page links")
+				return
+			}
+			if n != nil {
+				s.mu.Lock()
+				node.Nodes = append(node.Nodes, n)
+				s.mu.Unlock()
+			}
+		}(currentLink, node)
 	}
+
+	wg.Wait()
 
 	return node, nil
 }
@@ -156,7 +169,7 @@ func (s *siteReader) processLinks(link *url.URL, content string) ([]string, erro
 	}
 
 	result := []string{}
-	for key, _ := range links {
+	for key := range links {
 		result = append(result, key)
 	}
 

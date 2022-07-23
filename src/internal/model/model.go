@@ -1,6 +1,9 @@
 package model
 
+import "encoding/xml"
+
 type Node struct {
-	URL   string  `xml:"url"`
-	Nodes []*Node `xml:"nodes"`
+	XMLName xml.Name `xml:"node"`
+	URL     string   `xml:"url"`
+	Nodes   []*Node  `xml:"nodes>''"`
 }
