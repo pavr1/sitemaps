@@ -1,5 +1,6 @@
 # Sitemap Generator
 This application has 2 modes:
+
     - LocalConsole: This mode is meant for executing locally as a simple console application. 
         *** LocalConsole mode has to be run locally only, Docker was done explicitly for http server requests.
         To run LocalConsole just execute `go run .\main.go` within src/cmd directory. The configuration's default value is loaded as LocalConsole.
@@ -22,7 +23,7 @@ Unit tests:
 
     To use the .env file please create it with the following data: 
     *** configuration values are not intended to be public, more if we're talking about sensitive data, but for you guys to be able to run the app, and having in mind there are no tokens or security access credentials, I will leave them here.
-    
+
     # 1 = LOCALCONSOLE / 2 = HTTPSERVER
     EXECUTION_MODE=1
     APP_NAME="Sitemaps"
