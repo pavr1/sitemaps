@@ -13,8 +13,7 @@ import (
 )
 
 const (
-	OK         = 200
-	LinkRegExp = "<a.*?href=\"(.*?)\""
+	OK = 200
 )
 
 type SiteReader interface {
@@ -31,14 +30,14 @@ type siteReader struct {
 	mu       sync.Mutex
 }
 
-func NewSiteReader(maxDepth int, logger *logrus.Entry, url wrapper.UrlWrapper, http wrapper.HttpWrapper, ioutil wrapper.IoutilWrapper) SiteReader {
+func NewSiteReader(maxDepth int, linkRegExpress string, logger *logrus.Entry, url wrapper.UrlWrapper, http wrapper.HttpWrapper, ioutil wrapper.IoutilWrapper) SiteReader {
 	return &siteReader{
 		maxDepth: maxDepth,
+		regExp:   regexp.MustCompile(linkRegExpress),
 		logger:   logger,
 		url:      url,
 		http:     http,
 		ioutil:   ioutil,
-		regExp:   regexp.MustCompile(LinkRegExp),
 	}
 }
 

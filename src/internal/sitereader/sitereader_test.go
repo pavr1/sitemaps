@@ -19,7 +19,7 @@ type urlWrapperMock struct {
 	mock.Mock
 }
 
-func (u urlWrapperMock) Parse(rawURL string) (*url.URL, error) {
+func (u *urlWrapperMock) Parse(rawURL string) (*url.URL, error) {
 	args := u.Called(rawURL)
 
 	return args.Get(0).(*url.URL), args.Error(1)
@@ -29,7 +29,7 @@ type httpWrapperMock struct {
 	mock.Mock
 }
 
-func (h httpWrapperMock) Get(url string) (resp *http.Response, err error) {
+func (h *httpWrapperMock) Get(url string) (resp *http.Response, err error) {
 	args := h.Called(url)
 
 	return args.Get(0).(*http.Response), args.Error(1)
@@ -39,7 +39,7 @@ type ioutilWrapperMock struct {
 	mock.Mock
 }
 
-func (i ioutilWrapperMock) ReadAll(r io.Reader) ([]byte, error) {
+func (i *ioutilWrapperMock) ReadAll(r io.Reader) ([]byte, error) {
 	args := i.Called(r)
 
 	return args.Get(0).([]byte), args.Error(1)
@@ -269,9 +269,9 @@ func Test_GetPageLinks(t *testing.T) {
 		"App": "Sitemaps",
 	})
 
-	urlWrapperMock := urlWrapperMock{}
-	httpWrapperMock := httpWrapperMock{}
-	ioutilWrapperMock := ioutilWrapperMock{}
+	urlWrapperMock := &urlWrapperMock{}
+	httpWrapperMock := &httpWrapperMock{}
+	ioutilWrapperMock := &ioutilWrapperMock{}
 
 	for _, tt := range tests {
 		if tt.expectedURL != nil {
@@ -284,7 +284,7 @@ func Test_GetPageLinks(t *testing.T) {
 			ioutilWrapperMock.On(tt.expectedIoutil.method, tt.expectedIoutil.args).Return(tt.expectedIoutil.methodReturn.response, tt.expectedIoutil.methodReturn.err)
 		}
 
-		reader := NewSiteReader(tt.depth, log, urlWrapperMock, httpWrapperMock, ioutilWrapperMock)
+		reader := NewSiteReader(tt.depth, "<a.*?href=\"(.*?)\"", log, urlWrapperMock, httpWrapperMock, ioutilWrapperMock)
 		node, err := reader.GetPageLinks(tt.link, tt.parentLink, tt.depth)
 
 		if tt.expectedError == nil && err != nil {
